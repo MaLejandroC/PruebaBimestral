@@ -75,11 +75,19 @@ val publicaciones: List[Publicacion] = List(
 )
 
 
+/*Deseo que ha este codigo, lo hagas mas funcional, que tenga las caracteristicas
+de un codigo de scala bien estructurado, quiero que no utilices
+sentencias avanzadas. Hagamoslo mas corto, pero que me lleve a la misma
+respuesta*/
+
+
 case class PublicacionConPuntaje(pub: Publicacion, puntaje: Int)
 
-def publicacionMasImpactante(publicaciones: List[Publicacion], minLen: Int): PublicacionConPuntaje = {
+def publicacionMasImpactante(
+                              publicaciones: List[Publicacion],
+                              minLen: Int
+                            ): Option[PublicacionConPuntaje] = {
 
-  // Valores asignados a cada tipo de reacción
   val valorReaccion = Map(
     "like"  -> 1,
     "love"  -> 3,
@@ -88,32 +96,26 @@ def publicacionMasImpactante(publicaciones: List[Publicacion], minLen: Int): Pub
     "angry" -> -1
   )
 
-  // Paso 1: quedarnos solo con publicaciones largas
-  val publicacionesValidas =
-    publicaciones.filter(p => p.texto.length >= minLen)
+  publicaciones
+    .filter(_.texto.length >= minLen)
 
-  // Paso 2: calcular puntaje para cada publicación
-  val publicacionesConPuntaje =
-    publicacionesValidas.map { p =>
-      var puntaje = 0
-
-      for (r <- p.reacciones) {
-        val tipo = r.toLowerCase
-        val valor = valorReaccion.getOrElse(tipo, 0)
-        puntaje += valor
-      }
+    .map { p =>
+      val puntaje =
+        p.reacciones
+          .map(_.toLowerCase)
+          .flatMap(valorReaccion.get)
+          .sum
 
       PublicacionConPuntaje(p, puntaje)
     }
 
-  // Paso 3: seleccionar la de mayor puntaje
-  val mejor = publicacionesConPuntaje.maxBy(pc => pc.puntaje)
-
-  mejor
+    .maxByOption(_.puntaje)
 }
 
-val resultado = publicacionMasImpactante(publicaciones, 55)
 
-print(resultado.pub.id, resultado.pub.autor)
-print("Texto: " + resultado.pub.texto)
-print("Puntaje:" + resultado.puntaje)
+publicacionMasImpactante(publicaciones, 55).foreach { r =>
+  println(s"ID: ${r.pub.id}, Autor: ${r.pub.autor}")
+  println(s"Texto: ${r.pub.texto}")
+  println(s"Puntaje: ${r.puntaje}")
+}
+
